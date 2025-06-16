@@ -20,6 +20,8 @@
 
   <div id="attendance" class="tab" style="display:block;">
     <h3>Mark Attendance</h3>
+    <label>Date:</label>
+    <input type="date" id="att-date">
     <label>Location:</label>
     <select id="att-location" onchange="populatePlayers('att')"></select>
     <label>Player:</label>
@@ -52,7 +54,7 @@
   </div>
 
   <script>
-        const webAppBaseUrl = "https://script.google.com/macros/s/AKfycbxfrCUEqBh0vyON9OxRm9vL992zdyutIdoMoA5ZRNEO_Moce9E1dF8XYlU31ZwApacX4A/exec/exec";
+    const webAppBaseUrl = "https://script.google.com/macros/s/AKfycbxfrCUEqBh0vyON9OxRm9vL992zdyutIdoMoA5ZRNEO_Moce9E1dF8XYlU31ZwApacX4A/exec/exec";
     let playersByLocation = {};
 
     function openTab(tabName, event) {
@@ -106,7 +108,7 @@
     function submitAttendance() {
       const data = {
         type: "attendance",
-        date: new Date().toISOString().split('T')[0],
+        date: document.getElementById("att-date").value,
         location: document.getElementById("att-location").value,
         player: document.getElementById("att-player").value,
         status: document.getElementById("att-status").value
@@ -141,7 +143,12 @@
         .catch(err => alert("Error: " + err));
     }
 
-    window.onload = populateDropdowns;
+    window.onload = () => {
+      populateDropdowns();
+      // Pre-fill today's date in attendance form
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById("att-date").value = today;
+    };
   </script>
 </body>
 </html>
