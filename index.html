@@ -62,25 +62,34 @@
       event.target.classList.add('active');
     }
 
-    function populateDropdowns() {
-      fetch(webAppBaseUrl + "?action=getPlayerList")
-        .then(response => response.json())
-        .then(data => {
-          playersByLocation = data;
-          const locations = Object.keys(data);
-          ['att-location', 'fees-location'].forEach(id => {
-            const select = document.getElementById(id);
-            select.innerHTML = "";
-            locations.forEach(loc => {
-              const option = document.createElement('option');
-              option.value = loc;
-              option.textContent = loc;
-              select.appendChild(option);
-            });
-            populatePlayers(id.split('-')[0]);
-          });
-        }).catch(err => alert("Failed to load player list. Check Web App URL or permissions."));
-    }
+function populateDropdowns() {
+  fetch(webAppBaseUrl + "?action=getPlayerList")
+    .then(response => {
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      return response.json();
+    })
+    .then(data => {
+      console.log("Fetched player data:", data); // ✅ See this in console
+      playersByLocation = data;
+
+      const locations = Object.keys(data);
+      ['att-location', 'fees-location'].forEach(id => {
+        const select = document.getElementById(id);
+        select.innerHTML = "";
+        locations.forEach(loc => {
+          const option = document.createElement('option');
+          option.value = loc;
+          option.textContent = loc;
+          select.appendChild(option);
+        });
+        populatePlayers(id.split('-')[0]); // load players
+      });
+    })
+    .catch(err => {
+      console.error("Fetch error:", err); // See if fetch fails
+      alert("Failed to load player list. Check Web App URL or permissions.");
+    });
+}
 
     function populatePlayers(type) {
       const location = document.getElementById(`${type}-location`).value;
