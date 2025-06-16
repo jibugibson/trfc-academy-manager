@@ -54,7 +54,9 @@
   </div>
 
   <script>
+    // ✅ Replace this with your deployed Web App URL (must end with /exec)
     const webAppBaseUrl = "https://script.google.com/macros/s/AKfycbxfrCUEqBh0vyON9OxRm9vL992zdyutIdoMoA5ZRNEO_Moce9E1dF8XYlU31ZwApacX4A/exec";
+
     let playersByLocation = {};
 
     function openTab(tabName, event) {
@@ -66,12 +68,8 @@
 
     function populateDropdowns() {
       fetch(webAppBaseUrl + "?action=getPlayerList")
-        .then(response => {
-          if (!response.ok) throw new Error("HTTP " + response.status);
-          return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-          console.log("Fetched player data:", data);
           playersByLocation = data;
           const locations = Object.keys(data);
           ['att-location', 'fees-location'].forEach(id => {
@@ -88,7 +86,7 @@
         })
         .catch(err => {
           console.error("Fetch error:", err);
-          alert("Failed to load player list. Check Web App URL or permissions.");
+          alert("Failed to load player list.");
         });
     }
 
@@ -113,14 +111,13 @@
         player: document.getElementById("att-player").value,
         status: document.getElementById("att-status").value
       };
-      console.log("Submitting attendance:", data);
       fetch(webAppBaseUrl, {
         method: "POST",
         body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" }
       }).then(res => res.text())
         .then(msg => alert("✅ Attendance submitted"))
-        .catch(err => alert("Error: " + err));
+        .catch(err => alert("❌ Error submitting attendance: " + err));
     }
 
     function submitFees() {
@@ -133,27 +130,20 @@
         amount: document.getElementById("fees-amount").value,
         mode: document.getElementById("fees-mode").value
       };
-      console.log("Submitting fees:", data);
       fetch(webAppBaseUrl, {
         method: "POST",
         body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" }
       }).then(res => res.text())
         .then(msg => alert("✅ Fee submitted"))
-        .catch(err => alert("Error: " + err));
+        .catch(err => alert("❌ Error submitting fee: " + err));
     }
 
     window.onload = () => {
       populateDropdowns();
-      // Pre-fill today's date in attendance form
       const today = new Date().toISOString().split('T')[0];
       document.getElementById("att-date").value = today;
     };
-   
   </script>
 </body>
 </html>
-
-
-
- 
