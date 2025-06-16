@@ -144,6 +144,12 @@
       const today = new Date().toISOString().split('T')[0];
       document.getElementById("att-date").value = today;
     };
+    fetch(webAppBaseUrl, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(data)
+})
+
   </script>
 </body>
 </html>
