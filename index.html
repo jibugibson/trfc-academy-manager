@@ -149,17 +149,7 @@
       const today = new Date().toISOString().split('T')[0];
       document.getElementById("att-date").value = today;
     };
-    fetch(webAppBaseUrl + "?action=getPlayerList")
-  .then(response => {
-    console.log("Status:", response.status);
-    return response.text();
-  })
-  .then(text => {
-    console.log("Response:", text);
-  })
-  .catch(error => {
-    console.error("Fetch failed:", error);
-  });
+   
   </script>
 </body>
 </html>
