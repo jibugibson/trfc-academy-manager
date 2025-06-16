@@ -113,8 +113,8 @@
       };
       fetch(webAppBaseUrl, {
         method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
       }).then(res => res.text())
         .then(msg => alert("✅ Attendance submitted"))
         .catch(err => alert("❌ Error submitting attendance: " + err));
