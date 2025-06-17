@@ -53,9 +53,12 @@
     <button onclick="submitFees()">Submit Fee</button>
   </div>
 
-  <script>
-    // ✅ Replace this with your deployed Web App URL (must end with /exec)
-    const webAppBaseUrl = "https://script.google.com/macros/s/AKfycbxfrCUEqBh0vyON9OxRm9vL992zdyutIdoMoA5ZRNEO_Moce9E1dF8XYlU31ZwApacX4A/exec";
+  <script type="module">
+    const SUPABASE_URL = "https://mcxreazaikqaifhyreyd.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jeHJlYXphaWtxYWlmaHlyZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNDUzNDAsImV4cCI6MjA2NTcyMTM0MH0.3y1K2HUVyVDWvfeTKXB_5SDzeqt5COpIIXb4kAvlIEw";
+
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let playersByLocation = {};
 
@@ -66,85 +69,83 @@
       event.target.classList.add('active');
     }
 
-    function populateDropdowns() {
-      fetch(webAppBaseUrl + "?action=getPlayerList")
-        .then(response => response.json())
-        .then(data => {
-          playersByLocation = data;
-          const locations = Object.keys(data);
-          ['att-location', 'fees-location'].forEach(id => {
-            const select = document.getElementById(id);
-            select.innerHTML = "";
-            locations.forEach(loc => {
-              const option = document.createElement('option');
-              option.value = loc;
-              option.textContent = loc;
-              select.appendChild(option);
-            });
-            populatePlayers(id.split('-')[0]);
-          });
-        })
-        .catch(err => {
-          console.error("Fetch error:", err);
-          alert("Failed to load player list.");
+    async function populateDropdowns() {
+      const { data, error } = await supabase.from("players").select("*");
+      if (error) {
+        alert("Error loading players");
+        return;
+      }
+
+      playersByLocation = {};
+      data.forEach(player => {
+        if (!playersByLocation[player.location]) {
+          playersByLocation[player.location] = [];
+        }
+        playersByLocation[player.location].push(player.name);
+      });
+
+      ['att-location', 'fees-location'].forEach(id => {
+        const select = document.getElementById(id);
+        select.innerHTML = "";
+        Object.keys(playersByLocation).forEach(loc => {
+          const option = document.createElement("option");
+          option.value = loc;
+          option.textContent = loc;
+          select.appendChild(option);
         });
+        populatePlayers(id.split('-')[0]);
+      });
     }
 
     function populatePlayers(type) {
       const location = document.getElementById(`${type}-location`).value;
-      const players = playersByLocation[location] || [];
       const playerSelect = document.getElementById(`${type}-player`);
       playerSelect.innerHTML = "";
-      players.forEach(player => {
-        const option = document.createElement('option');
+      (playersByLocation[location] || []).forEach(player => {
+        const option = document.createElement("option");
         option.value = player;
         option.textContent = player;
         playerSelect.appendChild(option);
       });
     }
 
-    function submitAttendance() {
+    async function submitAttendance() {
       const data = {
-        type: "attendance",
         date: document.getElementById("att-date").value,
         location: document.getElementById("att-location").value,
         player: document.getElementById("att-player").value,
         status: document.getElementById("att-status").value
       };
-      fetch(webAppBaseUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      }).then(res => res.text())
-        .then(msg => alert("✅ Attendance submitted"))
-        .catch(err => alert("❌ Error submitting attendance: " + err));
+      const { error } = await supabase.from("attendance").insert(data);
+      if (error) {
+        alert("❌ Error submitting attendance");
+      } else {
+        alert("✅ Attendance submitted");
+      }
     }
 
-    function submitFees() {
+    async function submitFees() {
       const data = {
-        type: "fees",
         date: new Date().toISOString().split('T')[0],
         location: document.getElementById("fees-location").value,
         player: document.getElementById("fees-player").value,
         month: document.getElementById("fees-month").value,
-        amount: document.getElementById("fees-amount").value,
+        amount: +document.getElementById("fees-amount").value,
         mode: document.getElementById("fees-mode").value
       };
-      fetch(webAppBaseUrl, {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" }
-      }).then(res => res.text())
-        .then(msg => alert("✅ Fee submitted"))
-        .catch(err => alert("❌ Error submitting fee: " + err));
+      const { error } = await supabase.from("fees").insert(data);
+      if (error) {
+        alert("❌ Error submitting fee");
+      } else {
+        alert("✅ Fee submitted");
+      }
     }
 
     window.onload = () => {
       populateDropdowns();
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById("att-date").value = today;
+      document.getElementById("att-date").value = new Date().toISOString().split('T')[0];
     };
-
   </script>
 </body>
 </html>
+
