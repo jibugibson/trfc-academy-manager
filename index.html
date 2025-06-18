@@ -53,14 +53,14 @@
     <button onclick="submitFees()">Submit Fee</button>
   </div>
 
-  <!-- ✅ Supabase UMD CDN -->
+  <!-- ✅ Supabase CDN UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.min.js"></script>
 
   <script>
-    // ✅ Replace with your Supabase credentials
-    const SUPABASE_URL = "https://mcxreazaikqaifhyreyd.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jeHJlYXphaWtxYWlmaHlyZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNDUzNDAsImV4cCI6MjA2NTcyMTM0MH0.3y1K2HUVyVDWvfeTKXB_5SDzeqt5COpIIXb4kAvlIEw";
+    const SUPABASE_URL = "https://mcxreazaikqaifhyreyd.supabase.co";  // <-- Change this
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jeHJlYXphaWtxYWlmaHlyZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNDUzNDAsImV4cCI6MjA2NTcyMTM0MH0.3y1K2HUVyVDWvfeTKXB_5SDzeqt5COpIIXb4kAvlIEw";                // <-- And this
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     let playersByLocation = {};
 
     function openTab(tabName, event) {
