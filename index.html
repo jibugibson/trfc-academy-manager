@@ -54,12 +54,13 @@
   </div>
 
   <script type="module">
+    import { createClient } from 'https://unpkg.com/@supabase/supabase-js@2.39.5/dist/module/index.js';
+
+    // ✅ Replace these with your actual Supabase credentials
     const SUPABASE_URL = "https://mcxreazaikqaifhyreyd.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jeHJlYXphaWtxYWlmaHlyZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNDUzNDAsImV4cCI6MjA2NTcyMTM0MH0.3y1K2HUVyVDWvfeTKXB_5SDzeqt5COpIIXb4kAvlIEw";
 
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     let playersByLocation = {};
 
     function openTab(tabName, event) {
@@ -68,11 +69,12 @@
       document.getElementById(tabName).style.display = 'block';
       event.target.classList.add('active');
     }
+    window.openTab = openTab;
 
     async function populateDropdowns() {
       const { data, error } = await supabase.from("players").select("*");
       if (error) {
-        alert("Error loading players");
+        alert("❌ Error loading players");
         return;
       }
 
@@ -108,6 +110,7 @@
         playerSelect.appendChild(option);
       });
     }
+    window.populatePlayers = populatePlayers;
 
     async function submitAttendance() {
       const data = {
@@ -123,6 +126,7 @@
         alert("✅ Attendance submitted");
       }
     }
+    window.submitAttendance = submitAttendance;
 
     async function submitFees() {
       const data = {
@@ -140,6 +144,7 @@
         alert("✅ Fee submitted");
       }
     }
+    window.submitFees = submitFees;
 
     window.onload = () => {
       populateDropdowns();
@@ -148,4 +153,3 @@
   </script>
 </body>
 </html>
-
