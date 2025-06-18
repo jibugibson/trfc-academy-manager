@@ -53,14 +53,14 @@
     <button onclick="submitFees()">Submit Fee</button>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://unpkg.com/@supabase/supabase-js@2.39.5/dist/module/index.js';
+  <!-- ✅ Supabase UMD CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.min.js"></script>
 
-    // ✅ Replace these with your actual Supabase credentials
+  <script>
+    // ✅ Replace with your Supabase credentials
     const SUPABASE_URL = "https://mcxreazaikqaifhyreyd.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jeHJlYXphaWtxYWlmaHlyZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNDUzNDAsImV4cCI6MjA2NTcyMTM0MH0.3y1K2HUVyVDWvfeTKXB_5SDzeqt5COpIIXb4kAvlIEw";
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let playersByLocation = {};
 
     function openTab(tabName, event) {
@@ -120,11 +120,7 @@
         status: document.getElementById("att-status").value
       };
       const { error } = await supabase.from("attendance").insert(data);
-      if (error) {
-        alert("❌ Error submitting attendance");
-      } else {
-        alert("✅ Attendance submitted");
-      }
+      alert(error ? "❌ Error submitting attendance" : "✅ Attendance submitted");
     }
     window.submitAttendance = submitAttendance;
 
@@ -138,11 +134,7 @@
         mode: document.getElementById("fees-mode").value
       };
       const { error } = await supabase.from("fees").insert(data);
-      if (error) {
-        alert("❌ Error submitting fee");
-      } else {
-        alert("✅ Fee submitted");
-      }
+      alert(error ? "❌ Error submitting fee" : "✅ Fee submitted");
     }
     window.submitFees = submitFees;
 
@@ -153,3 +145,4 @@
   </script>
 </body>
 </html>
+
