@@ -53,12 +53,11 @@
     <button onclick="submitFees()">Submit Fee</button>
   </div>
 
-  <!-- ✅ Supabase CDN UMD -->
+  <!-- ✅ Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.min.js"></script>
-
   <script>
-    const SUPABASE_URL = "https://mcxreazaikqaifhyreyd.supabase.co"; 
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jeHJlYXphaWtxYWlmaHlyZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNDUzNDAsImV4cCI6MjA2NTcyMTM0MH0.3y1K2HUVyVDWvfeTKXB_5SDzeqt5COpIIXb4kAvlIEw";                // <-- And this
+    const SUPABASE_URL = "https://trmghpxhjxlyrtkvktob.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybWdocHhoanhseXJ0a3ZrdG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNjUxMzUsImV4cCI6MjA2NTg0MTEzNX0.eiEYO_ol-J0gSoiFjxFUxTjSa1iGr3PXogAUgG8Xbp0";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let playersByLocation = {};
@@ -75,6 +74,7 @@
       const { data, error } = await supabase.from("players").select("*");
       if (error) {
         alert("❌ Error loading players");
+        console.error(error);
         return;
       }
 
@@ -145,4 +145,5 @@
   </script>
 </body>
 </html>
+
 
