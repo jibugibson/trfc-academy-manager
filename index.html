@@ -22,15 +22,22 @@
     <h3>Mark Attendance</h3>
     <label>Date:</label>
     <input type="date" id="att-date">
+    
     <label>Location:</label>
     <select id="att-location" onchange="populatePlayers('att')"></select>
+    
     <label>Player:</label>
     <select id="att-player"></select>
+    
+    <label>Coach (Marking Attendance):</label>
+    <select id="att-coach"></select> <!-- ✅ Coach dropdown added -->
+
     <label>Status:</label>
     <select id="att-status">
       <option value="Present">Present</option>
       <option value="Absent">Absent</option>
     </select>
+    
     <button onclick="submitAttendance()">Submit Attendance</button>
   </div>
 
@@ -99,6 +106,24 @@
       });
     }
 
+    async function populateCoaches() {
+      const { data, error } = await supabase.from("coaches").select("name");
+      if (error) {
+        alert("❌ Error loading coaches");
+        console.error(error);
+        return;
+      }
+
+      const coachSelect = document.getElementById("att-coach");
+      coachSelect.innerHTML = "";
+      data.forEach(coach => {
+        const option = document.createElement("option");
+        option.value = coach.name;
+        option.textContent = coach.name;
+        coachSelect.appendChild(option);
+      });
+    }
+
     function populatePlayers(type) {
       const location = document.getElementById(`${type}-location`).value;
       const playerSelect = document.getElementById(`${type}-player`);
@@ -117,6 +142,7 @@
         date: document.getElementById("att-date").value,
         location: document.getElementById("att-location").value,
         player: document.getElementById("att-player").value,
+        coach: document.getElementById("att-coach").value, // ✅ Coach saved
         status: document.getElementById("att-status").value
       };
       const { error } = await supabase.from("attendance").insert(data);
@@ -140,10 +166,9 @@
 
     window.onload = () => {
       populateDropdowns();
+      populateCoaches(); // ✅ Load coach list
       document.getElementById("att-date").value = new Date().toISOString().split('T')[0];
     };
   </script>
 </body>
 </html>
-
-
