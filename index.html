@@ -1,3 +1,5 @@
+# Combine the entire updated HTML into a single index.html file for download
+html_content = '''
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,6 +14,8 @@
   </style>
 </head>
 <body>
+  <img src="https://images.app.goo.gl/KSkjbG115Nh9f8UL8" alt="TRFC Logo"
+       style="height: 40px; position: absolute; top: 10px; left: 10px;">
   <h2>Travancore Royals Academy Manager</h2>
   <div>
     <button class="tab-button active" onclick="openTab('attendance', event)">Attendance</button>
@@ -22,22 +26,17 @@
     <h3>Mark Attendance</h3>
     <label>Date:</label>
     <input type="date" id="att-date">
-    
     <label>Location:</label>
     <select id="att-location" onchange="populatePlayers('att')"></select>
-    
     <label>Player:</label>
     <select id="att-player"></select>
-    
     <label>Coach (Marking Attendance):</label>
-    <select id="att-coach"></select> <!-- ✅ Coach dropdown added -->
-
+    <select id="att-coach"></select>
     <label>Status:</label>
     <select id="att-status">
       <option value="Present">Present</option>
       <option value="Absent">Absent</option>
     </select>
-    
     <button onclick="submitAttendance()">Submit Attendance</button>
   </div>
 
@@ -60,13 +59,16 @@
     <button onclick="submitFees()">Submit Fee</button>
   </div>
 
-  <!-- ✅ Supabase JS CDN -->
+  <div id="report-download" style="display:none; margin-top: 20px;">
+    <button onclick="downloadMonthlyReport()">📥 Download Monthly Report</button>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script>
     const SUPABASE_URL = "https://trmghpxhjxlyrtkvktob.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybWdocHhoanhseXJ0a3ZrdG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNjUxMzUsImV4cCI6MjA2NTg0MTEzNX0.eiEYO_ol-J0gSoiFjxFUxTjSa1iGr3PXogAUgG8Xbp0";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     let playersByLocation = {};
 
     function openTab(tabName, event) {
@@ -80,11 +82,8 @@
     async function populateDropdowns() {
       const { data, error } = await supabase.from("players").select("*");
       if (error) {
-        alert("❌ Error loading players");
-        console.error(error);
-        return;
+        alert("❌ Error loading players"); console.error(error); return;
       }
-
       playersByLocation = {};
       data.forEach(player => {
         if (!playersByLocation[player.location]) {
@@ -92,14 +91,12 @@
         }
         playersByLocation[player.location].push(player.name);
       });
-
       ['att-location', 'fees-location'].forEach(id => {
         const select = document.getElementById(id);
         select.innerHTML = "";
         Object.keys(playersByLocation).forEach(loc => {
           const option = document.createElement("option");
-          option.value = loc;
-          option.textContent = loc;
+          option.value = loc; option.textContent = loc;
           select.appendChild(option);
         });
         populatePlayers(id.split('-')[0]);
@@ -109,11 +106,8 @@
     async function populateCoaches() {
       const { data, error } = await supabase.from("coaches").select("name");
       if (error) {
-        alert("❌ Error loading coaches");
-        console.error(error);
-        return;
+        alert("❌ Error loading coaches"); console.error(error); return;
       }
-
       const coachSelect = document.getElementById("att-coach");
       coachSelect.innerHTML = "";
       data.forEach(coach => {
@@ -142,7 +136,7 @@
         date: document.getElementById("att-date").value,
         location: document.getElementById("att-location").value,
         player: document.getElementById("att-player").value,
-        coach: document.getElementById("att-coach").value, // ✅ Coach saved
+        coach: document.getElementById("att-coach").value,
         status: document.getElementById("att-status").value
       };
       const { error } = await supabase.from("attendance").insert(data);
@@ -164,11 +158,68 @@
     }
     window.submitFees = submitFees;
 
+    async function downloadMonthlyReport() {
+      const now = new Date();
+      const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+      const prevMonthName = new Date(0, prevMonth).toLocaleString('default', { month: 'long' });
+
+      const { data: feesData } = await supabase.from("fees").select("*");
+      const feeSummary = feesData
+        .filter(f => new Date(f.date).getMonth() === prevMonth)
+        .reduce((acc, row) => {
+          acc[row.location] = (acc[row.location] || 0) + row.amount;
+          return acc;
+        }, {});
+      const feeSheet = Object.entries(feeSummary).map(([location, total]) => ({
+        Month: prevMonthName,
+        Location: location,
+        "Total Collected": total
+      }));
+
+      const { data: attData } = await supabase.from("attendance").select("*");
+      const summary = {};
+      attData
+        .filter(a => new Date(a.date).getMonth() === prevMonth)
+        .forEach(row => {
+          const key = `${row.location}-${row.player}`;
+          if (!summary[key]) {
+            summary[key] = { Present: 0, Total: 0, Player: row.player, Location: row.location };
+          }
+          summary[key].Total++;
+          if (row.status === "Present") summary[key].Present++;
+        });
+      const attSheet = Object.values(summary).map(r => ({
+        Month: prevMonthName,
+        Location: r.Location,
+        Player: r.Player,
+        "Present Days": r.Present,
+        "Total Days": r.Total,
+        "Attendance %": Math.round((r.Present / r.Total) * 100)
+      }));
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(feeSheet), "Fee Summary");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(attSheet), "Attendance Summary");
+      XLSX.writeFile(wb, `TRFC_Report_${prevMonthName}.xlsx`);
+    }
+
     window.onload = () => {
       populateDropdowns();
-      populateCoaches(); // ✅ Load coach list
+      populateCoaches();
       document.getElementById("att-date").value = new Date().toISOString().split('T')[0];
+      const day = new Date().getDate();
+      if (day >= 1 && day <= 10) {
+        document.getElementById("report-download").style.display = "block";
+      }
     };
   </script>
 </body>
 </html>
+'''
+
+# Save HTML to file
+html_path = "/mnt/data/index_trfc_export_ready.html"
+with open(html_path, "w") as file:
+    file.write(html_content)
+
+html_path
