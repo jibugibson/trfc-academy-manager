@@ -2,6 +2,8 @@
 <html>
 <head>
   <title>Travancore Royals Academy</title>
+  <meta name="theme-color" content="#004aad">
+  <link rel="manifest" href="manifest.json">
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     .tab { display: none; }
@@ -9,16 +11,14 @@
     .tab-button.active { background-color: #eee; }
     select, input, button { margin: 5px 0; padding: 10px; width: 100%; box-sizing: border-box; font-size: 1rem; }
     label { font-weight: bold; margin-top: 10px; display: block; }
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#004aad">
   </style>
 </head>
 <body>
   <div style="text-align: center; margin-bottom: 10px;">
-  <img src="https://github.com/jibugibson/trfc-academy-manager/blob/main/trfc.png?raw=true" alt="TRFC Logo"
-       style="height: 80px;"><br>
-  <h2 style="margin: 0;">Travancore Royals Academy Manager</h2>
-  </div>  
+    <img src="https://github.com/jibugibson/trfc-academy-manager/blob/main/trfc.png?raw=true" alt="TRFC Logo" style="height: 80px;"><br>
+    <h2 style="margin: 0;">Travancore Royals Academy Manager</h2>
+  </div>
+
   <div>
     <button class="tab-button active" onclick="openTab('attendance', event)">Attendance</button>
     <button class="tab-button" onclick="openTab('fees', event)">Fees</button>
@@ -62,11 +62,13 @@
   </div>
 
   <div id="report-download" style="display:none; margin-top: 20px;">
-    <button onclick="downloadMonthlyReport()">📥 Download Monthly Report</button>
+    <button onclick="downloadMonthlyReport()">📥 Download All Data Report</button>
   </div>
 
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <script>
     const SUPABASE_URL = "https://trmghpxhjxlyrtkvktob.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybWdocHhoanhseXJ0a3ZrdG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNjUxMzUsImV4cCI6MjA2NTg0MTEzNX0.eiEYO_ol-J0gSoiFjxFUxTjSa1iGr3PXogAUgG8Xbp0";
@@ -83,14 +85,10 @@
 
     async function populateDropdowns() {
       const { data, error } = await supabase.from("players").select("*");
-      if (error) {
-        alert("❌ Error loading players"); console.error(error); return;
-      }
+      if (error) return alert("❌ Error loading players");
       playersByLocation = {};
       data.forEach(player => {
-        if (!playersByLocation[player.location]) {
-          playersByLocation[player.location] = [];
-        }
+        if (!playersByLocation[player.location]) playersByLocation[player.location] = [];
         playersByLocation[player.location].push(player.name);
       });
       ['att-location', 'fees-location'].forEach(id => {
@@ -98,7 +96,8 @@
         select.innerHTML = "";
         Object.keys(playersByLocation).forEach(loc => {
           const option = document.createElement("option");
-          option.value = loc; option.textContent = loc;
+          option.value = loc;
+          option.textContent = loc;
           select.appendChild(option);
         });
         populatePlayers(id.split('-')[0]);
@@ -107,9 +106,7 @@
 
     async function populateCoaches() {
       const { data, error } = await supabase.from("coaches").select("name");
-      if (error) {
-        alert("❌ Error loading coaches"); console.error(error); return;
-      }
+      if (error) return alert("❌ Error loading coaches");
       const coachSelect = document.getElementById("att-coach");
       coachSelect.innerHTML = "";
       data.forEach(coach => {
@@ -161,49 +158,42 @@
     window.submitFees = submitFees;
 
     async function downloadMonthlyReport() {
-      const now = new Date();
-      const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
-      const prevMonthName = new Date(0, prevMonth).toLocaleString('default', { month: 'long' });
-
-      const { data: feesData } = await supabase.from("fees").select("*");
-      const feeSummary = feesData
-        .filter(f => new Date(f.date).getMonth() === prevMonth)
-        .reduce((acc, row) => {
-          acc[row.location] = (acc[row.location] || 0) + row.amount;
-          return acc;
-        }, {});
+      const { data: feesData, error: feeErr } = await supabase.from("fees").select("*");
+      if (feeErr || !feesData) return alert("❌ Failed to fetch fees");
+      const feeSummary = feesData.reduce((acc, row) => {
+        acc[row.location] = (acc[row.location] || 0) + (parseFloat(row.amount) || 0);
+        return acc;
+      }, {});
       const feeSheet = Object.entries(feeSummary).map(([location, total]) => ({
-        Month: prevMonthName,
         Location: location,
         "Total Collected": total
       }));
 
-      const { data: attData } = await supabase.from("attendance").select("*");
-      const summary = {};
-      attData
-        .filter(a => new Date(a.date).getMonth() === prevMonth)
-        .forEach(row => {
-          const key = `${row.location}-${row.player}`;
-          if (!summary[key]) {
-            summary[key] = { Present: 0, Total: 0, Player: row.player, Location: row.location };
-          }
-          summary[key].Total++;
-          if (row.status === "Present") summary[key].Present++;
-        });
-      const attSheet = Object.values(summary).map(r => ({
-        Month: prevMonthName,
-        Location: r.Location,
-        Player: r.Player,
-        "Present Days": r.Present,
-        "Total Days": r.Total,
-        "Attendance %": Math.round((r.Present / r.Total) * 100)
+      const { data: attData, error: attErr } = await supabase.from("attendance").select("*");
+      if (attErr || !attData) return alert("❌ Failed to fetch attendance");
+      const attSummary = {};
+      attData.forEach(row => {
+        const key = `${row.location}-${row.player}`;
+        if (!attSummary[key]) {
+          attSummary[key] = { Location: row.location, Player: row.player, Present: 0, Total: 0 };
+        }
+        attSummary[key].Total++;
+        if (row.status === "Present") attSummary[key].Present++;
+      });
+      const attSheet = Object.values(attSummary).map(entry => ({
+        Location: entry.Location,
+        Player: entry.Player,
+        "Present Days": entry.Present,
+        "Total Days": entry.Total,
+        "Attendance %": Math.round((entry.Present / entry.Total) * 100)
       }));
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(feeSheet), "Fee Summary");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(attSheet), "Attendance Summary");
-      XLSX.writeFile(wb, `TRFC_Report_${prevMonthName}.xlsx`);
+      XLSX.writeFile(wb, `TRFC_Report_All_Data.xlsx`);
     }
+    window.downloadMonthlyReport = downloadMonthlyReport;
 
     window.onload = () => {
       populateDropdowns();
@@ -215,7 +205,8 @@
       }
     };
   </script>
-    <script>
+
+  <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js')
@@ -226,5 +217,3 @@
   </script>
 </body>
 </html>
-
-
